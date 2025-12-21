@@ -1,6 +1,6 @@
 # 第一階段：編譯
 FROM maven:3.9.6-eclipse-temurin-21 AS build
-COPY . .
+COPY src/main/resources .
 RUN mvn clean package -DskipTests
 
 # 第二階段：執行
