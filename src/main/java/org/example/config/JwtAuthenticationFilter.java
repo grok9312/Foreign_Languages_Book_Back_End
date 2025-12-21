@@ -34,15 +34,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     // 🚨 新增：覆寫 shouldNotFilter 檢查方法，用於排除公開路徑
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        String path = request.getRequestURI();
+        String method = request.getMethod();
 
-        // 判斷是否為 OPTIONS 請求 (這是預檢請求)
-        boolean isOptions = request.getMethod().equals("OPTIONS");
+        // 1. 放行所有 OPTIONS 預檢請求 (CORS 必備)
+        if ("OPTIONS".equalsIgnoreCase(method)) {
+            return true;
+        }
 
-        // 判斷是否為白名單路徑 (例如 /api/auth/**)
-        boolean isAuthPath = request.getRequestURI().startsWith(AUTH_PATH_PREFIX);
-
-        // 如果是 OPTIONS 請求 或是 公開的 /api/auth 路徑，則跳過此過濾器。
-        return request.getRequestURI().startsWith(AUTH_PATH_PREFIX);
+        // 2. 放行所有公開 API 路徑 (包含 /api/auth 和 /api/public)
+        // 這樣讀取書籍列表就不會進入 JWT 檢查邏輯
+        return path.startsWith("/api/auth") || path.startsWith("/api/public");
     }
 
     // org.example.config.JwtAuthenticationFilter.java
