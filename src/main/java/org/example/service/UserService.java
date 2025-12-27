@@ -83,7 +83,7 @@ public class UserService {
         // 轉換為 DTO 返回
         return UserProfileResponse.builder()
                 .email(user.getEmail())
-                .username(user.getUsername())
+                .username(user.getRealName())
                 .role(user.getRole())
                 .build();
     }
@@ -142,7 +142,11 @@ public class UserService {
         return userRepo.findAll().stream().map(user -> {
             UserResponse dto = new UserResponse();
             dto.setUserId(Math.toIntExact(user.getUserId()));
-            dto.setUsername(user.getUsername());
+            // ❌ 這裡原本寫了兩次 setUsername
+            // dto.setUsername(user.getUsername()); // 這會拿到 email
+            // dto.setUsername(user.getRealName()); // 這會覆蓋掉上面，雖然結果是對的但邏輯混亂
+
+            // ✅ 建議改成這樣，清爽又精確：
             dto.setUsername(user.getRealName());
             dto.setEmail(user.getEmail());
             dto.setRole(String.valueOf(user.getRole()));
