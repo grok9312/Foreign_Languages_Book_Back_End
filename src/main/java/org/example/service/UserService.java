@@ -149,6 +149,7 @@ public class UserService {
             // ✅ 建議改成這樣，清爽又精確：
             dto.setUsername(user.getRealName());
             dto.setEmail(user.getEmail());
+            dto.setCreatedAt(user.getCreatedAt());
             dto.setRole(String.valueOf(user.getRole()));
             dto.setIsActive(user.getIsActive());
             return dto;

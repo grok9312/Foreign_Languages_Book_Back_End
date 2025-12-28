@@ -6,12 +6,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails; // 引入 UserDetails
+
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-
+import
 // ⚠️ 這裡需要定義一個 Role 枚舉類 (例如 Role.USER, Role.ADMIN)
 
 @Data
@@ -126,5 +129,9 @@ public class User implements UserDetails{
     public void setRole(Role role) {
         this.role = role;
     }
+
+    @CreationTimestamp // 🎯 這會讓 Hibernate 在存檔時自動填入當前時間
+    @Column(updatable = false) // 註冊時間一旦寫入就不該被更改
+    private LocalDateTime createdAt;
 
 }
