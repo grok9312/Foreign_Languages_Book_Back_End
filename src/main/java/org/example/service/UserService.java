@@ -85,6 +85,7 @@ public class UserService {
                 .email(user.getEmail())
                 .username(user.getRealName())
                 .role(user.getRole())
+                .createdAt(user.getCreatedAt()) // 🎯 補上這一行，魔法才會生效！
                 .build();
     }
 
