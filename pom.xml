@@ -95,6 +95,15 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- 新增 H2 資料庫依賴，用於整合測試 -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+            <!-- 顯式指定版本，確保依賴能被正確解析 -->
+            <version>2.2.224</version>
+        </dependency>
+
     </dependencies>
 
     <build>

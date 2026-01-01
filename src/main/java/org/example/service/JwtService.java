@@ -18,20 +18,16 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-    // 移除原本的 private static final String SECRET_KEY = ...;
     @Value("${application.security.jwt.secret-key}")
-    private String secretKey; // 🎯 新增：使用 @Value 注入
+    private String secretKey;
 
     @Value("${application.security.jwt.expiration}")
     private long jwtExpiration;
 
-    // 產生 JWT Token
     public String generateToken(User user) {
         Map<String, Object> claims = new HashMap<>();
-        // 核心：將角色放入 Token 內
-        // 📢 請加上這行來確認數值
-        System.out.println("DEBUG JWT Expiration (ms): " + jwtExpiration);
         claims.put("role", user.getRole());
+        System.out.println("DEBUG JWT Expiration (ms): " + jwtExpiration);
         return buildToken(claims, user.getEmail(), jwtExpiration);
     }
 
@@ -39,42 +35,49 @@ public class JwtService {
         return Jwts
                 .builder()
                 .setClaims(extraClaims)
-                .setSubject(subject) // sub: email
+                .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    // 從 Token 提取 email (subject)
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // 從 Token 提取 role (custom claim)
     public String extractRole(String token) {
         final Claims claims = extractAllClaims(token);
         return (String) claims.get("role");
     }
 
     // 驗證 Token 是否有效
-// 🎯 修復：將參數型別從 User 改為 Spring Security 的 UserDetails 介面
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        // 注意：UserDetails 介面使用 getUsername()，我們知道它返回的是 Email
-        final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        try {
+            final String username = extractUsername(token);
+            // 如果能成功解析出用戶名，代表 Token 未過期且簽名正確
+            // 接下來只需比對用戶名是否一致
+            return username.equals(userDetails.getUsername());
+        } catch (Exception e) {
+            // 如果在解析過程中發生任何異常 (例如過期、格式錯誤)，都視為無效
+            return false;
+        }
     }
 
     // 檢查 Token 是否過期
     public boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        try {
+            return extractExpiration(token).before(new Date());
+        } catch (Exception e) {
+            // 如果解析過期時間時出錯 (例如 Token 本身就無效)，也視為已過期/無效
+            return true;
+        }
     }
 
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // 輔助方法：提取 Claim
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -89,7 +92,6 @@ public class JwtService {
                 .getBody();
     }
 
-    // 獲取簽名 Key
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);

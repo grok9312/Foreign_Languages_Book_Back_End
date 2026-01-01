@@ -168,18 +168,18 @@ public class OrderService {
 
         OrderStatus nextStatus = OrderStatus.valueOf(newStatus);
 
+        // 原有的防護邏輯 (修正：必須在 setStatus 之前檢查)
+        if ("CANCELLED".equalsIgnoreCase(newStatus) && "PAID".equalsIgnoreCase(order.getStatus().name())) {
+            // 注意：這裡如果拋出異常，上面的庫存回補會因為 @Transactional 而回滾(Rollback)，是安全的
+            throw new RuntimeException("已付款訂單無法直接取消，請聯繫金流端處理退款。");
+        }
+
         // 🌟 核心邏輯：如果新狀態是 CANCELLED，且舊狀態不是 CANCELLED
         if (nextStatus == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) {
             restoreStock(order);
         }
 
         order.setStatus(nextStatus);
-
-        // 原有的防護邏輯
-        if ("CANCELLED".equalsIgnoreCase(newStatus) && "PAID".equalsIgnoreCase(order.getStatus().name())) {
-            // 注意：這裡如果拋出異常，上面的庫存回補會因為 @Transactional 而回滾(Rollback)，是安全的
-            throw new RuntimeException("已付款訂單無法直接取消，請聯繫金流端處理退款。");
-        }
 
         return orderRepository.save(order);
     }
@@ -253,16 +253,17 @@ public class OrderService {
             throw new RuntimeException("不支援的訂單狀態: " + newStatus);
         }
 
+        // 🌟 修正點 3: 調整取消限制 (如果你希望管理員擁有最高權限強行取消，請移除或註解掉這段)
+        // 修正：必須在 setStatus 之前檢查
+        if (nextStatus == OrderStatus.CANCELLED && order.getStatus() == OrderStatus.PAID) {
+            // 如果是期末專案為了方便演示，建議把這個限制拿掉，或者讓管理員可以取消
+             // throw new RuntimeException("已付款訂單無法直接取消，請聯繫金流端處理退款。");
+        }
+
         // 🌟 修正點 2: 庫存回補邏輯
         if (nextStatus == OrderStatus.CANCELLED && order.getStatus() != OrderStatus.CANCELLED) {
             restoreStock(order);
         }
-
-        // 🌟 修正點 3: 調整取消限制 (如果你希望管理員擁有最高權限強行取消，請移除或註解掉這段)
-     if (nextStatus == OrderStatus.CANCELLED && order.getStatus() == OrderStatus.PAID) {
-        // 如果是期末專案為了方便演示，建議把這個限制拿掉，或者讓管理員可以取消
-    }
-
 
         order.setStatus(nextStatus);
         orderRepository.save(order);

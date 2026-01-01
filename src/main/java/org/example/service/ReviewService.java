@@ -35,9 +35,9 @@ public class ReviewService {
             dto.setContent(review.getContent());
             dto.setRating(review.getRating());
 
-            // 🌟 關鍵在這裡：從關聯的 User 物件中取出名字
+            // 🌟 關鍵修正：從關聯的 User 物件中取出真正的名字 (getRealName)
             if (review.getUser() != null) {
-                dto.setUsername(review.getUser().getUsername());
+                dto.setUsername(review.getUser().getRealName());
             } else {
                 dto.setUsername("匿名讀者");
             }
