@@ -34,7 +34,8 @@ public class BookController {
     @GetMapping("/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable Long id) {
         return bookService.getOnsaleBookById(id)
-                .map(ResponseEntity::ok)
+                // 修正：使用 Lambda 表達式避免方法引用歧義
+                .map(book -> ResponseEntity.ok(book))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

@@ -7,6 +7,7 @@ import org.example.repository.BookRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +36,6 @@ public class BookService {
 
     public List<Book> getOnsaleBooksByLang(String lang) {
         Language language = parseLanguage(lang);
-        // 注意：這裡假設 BookRepository.findByLangAndIsOnsaleTrue 的參數類型已經從 String 改為 Language
         return bookRepository.findByLangAndIsOnsaleTrue(language);
     }
 
@@ -59,6 +59,14 @@ public class BookService {
 
     @Transactional
     public Book createBook(BookRequest request) {
+        // 標題驗證
+        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+            throw new RuntimeException("書名不可為空");
+        }
+        // 價格驗證
+        if (request.getPrice() != null && request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("價格不可為負數");
+        }
         if (bookRepository.existsByIsbn(request.getIsbn())) {
             throw new RuntimeException("ISBN 國際標準書號已存在");
         }
@@ -83,6 +91,15 @@ public class BookService {
 
     @Transactional
     public Book updateBook(Long id, BookRequest request) {
+        // 標題驗證
+        if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
+            throw new RuntimeException("書名不可為空");
+        }
+        // 價格驗證
+        if (request.getPrice() != null && request.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("價格不可為負數");
+        }
+
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("書籍 ID: " + id + " 未找到"));
 
@@ -101,6 +118,7 @@ public class BookService {
         return bookRepository.save(book);
     }
 
+    @Transactional
     public Book updateBookStatus(Long id, boolean onsale) {
         Book book = bookRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("書籍 ID: " + id + " 未找到"));
